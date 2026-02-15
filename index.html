@@ -3,30 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>OFF</title> <style>
-        :root { --work-theme: #ff6b6b; --short-theme: #51cf66; --long-theme: #5c7cff; }
+    <title>OFF</title>
+    <style>
+        :root { --work-theme: #ff6b6b; --test-theme: #f0932b; --short-theme: #51cf66; }
         body { margin: 0; min-height: 100vh; display: flex; justify-content: center; align-items: center; font-family: -apple-system, sans-serif; transition: background 0.8s ease; background-color: var(--work-theme); overflow: hidden; }
         .app-container { width: 90%; max-width: 400px; }
-        .ios-card { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(45px); border-radius: 35px; border: 1px solid rgba(255,255,255,0.4); margin-bottom: 20px; text-align: center; transition: 0.5s opacity ease; }
+        .ios-card { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(45px); -webkit-backdrop-filter: blur(45px); border-radius: 35px; border: 1px solid rgba(255,255,255,0.4); margin-bottom: 20px; text-align: center; transition: 0.5s opacity ease; }
         .mode-nav { display: flex; padding: 8px; gap: 8px; }
-        .mode-nav button { flex: 1; border: none; background: transparent; padding: 12px; border-radius: 20px; font-weight: 700; color: rgba(0,0,0,0.4); }
+        .mode-nav button { flex: 1; border: none; background: transparent; padding: 12px; border-radius: 20px; font-weight: 700; color: rgba(0,0,0,0.5); cursor: pointer; }
         .mode-nav button.active { background: white; color: #000; }
         .timer-card { padding: 40px 30px; }
-        .timer-display { font-size: 6rem; font-weight: 800; margin: 15px 0; color: #1d1d1f; font-variant-numeric: tabular-nums; }
+        .timer-display { font-size: 6rem; font-weight: 800; margin: 15px 0; color: #1d1d1f; font-variant-numeric: tabular-nums; letter-spacing: -2px; }
         .control-group { display: flex; gap: 15px; justify-content: center; }
-        .control-group button { border: none; padding: 18px 40px; border-radius: 25px; font-size: 1.1rem; font-weight: 700; cursor: pointer; }
+        .control-group button { border: none; padding: 18px 30px; border-radius: 25px; font-size: 1.1rem; font-weight: 700; cursor: pointer; }
         .btn-start { background: #000; color: #fff; }
-        .btn-reset { background: rgba(0,0,0,0.05); color: #000; }
+        .btn-reset { background: rgba(0,0,0,0.1); color: #000; }
     </style>
 </head>
 <body>
     <div class="app-container">
         <nav class="mode-nav ios-card" id="nav-bar">
+            <button onclick="changeMode('test')" id="test-btn">1分测试</button>
             <button onclick="changeMode('work')" id="work-btn" class="active">专注</button>
             <button onclick="changeMode('short')" id="short-btn">短休</button>
         </nav>
+
         <main class="timer-card ios-card">
-            <div id="display" class="timer-display">25:00</div>
+            <div class="timer-display" id="display">25:00</div>
             <div class="control-group">
                 <button onclick="toggleTimer()" id="ctrl-btn" class="btn-start">开始</button>
                 <button onclick="resetTimer()" class="btn-reset">重置</button>
@@ -35,14 +38,21 @@
     </div>
 
     <script>
-        let timeLeft = 1500, totalTime = 1500, timerId = null;
-        const settings = { work: 1500, short: 300 };
+        let timeLeft = 1500, totalTime = 1500, timerId = null, currentMode = 'work';
+        const settings = {
+            test: { time: 60, theme: '#f0932b' },
+            work: { time: 1500, theme: '#ff6b6b' },
+            short: { time: 300, theme: '#51cf66' }
+        };
 
         function changeMode(mode) {
+            currentMode = mode;
             document.querySelectorAll('.mode-nav button').forEach(b => b.classList.remove('active'));
             document.getElementById(mode + '-btn').classList.add('active');
-            timeLeft = totalTime = settings[mode];
-            pauseTimer(); updateUI();
+            document.body.style.backgroundColor = settings[mode].theme;
+            timeLeft = totalTime = settings[mode].time;
+            pauseTimer(); 
+            updateUI();
         }
 
         function updateUI() {
@@ -53,26 +63,41 @@
 
         function toggleTimer() {
             if (timerId) { 
-                pauseTimer();
-                document.title = "OFF"; // 信号：停止锁定
+                pauseTimer(); 
+                document.title = "OFF"; // 暂停即解锁
             } else {
-                timerId = setInterval(() => {
-                    if (timeLeft > 0) { timeLeft--; updateUI(); } 
-                    else { pauseTimer(); document.title = "OFF"; alert("完成！"); }
-                }, 1000);
+                document.title = "ON"; // 发送锁定信号
+                document.getElementById('nav-bar').style.opacity = "0"; // 隐藏菜单
                 document.getElementById('ctrl-btn').innerText = "暂停";
-                document.title = "ON"; // 信号：开始锁定
-                document.getElementById('nav-bar').style.opacity = "0";
+                timerId = setInterval(() => {
+                    if (timeLeft > 0) { 
+                        timeLeft--; 
+                        updateUI(); 
+                    } else { 
+                        pauseTimer(); 
+                        document.title = "OFF"; // 时间结束解锁
+                        alert("测试结束，辛苦了！"); 
+                    }
+                }, 1000);
             }
         }
 
         function pauseTimer() { 
-            clearInterval(timerId); timerId = null; 
-            document.getElementById('ctrl-btn').innerText = "开始";
+            clearInterval(timerId); 
+            timerId = null; 
+            document.getElementById('ctrl-btn').innerText = "开始"; 
             document.getElementById('nav-bar').style.opacity = "1";
         }
 
-        function resetTimer() { pauseTimer(); document.title = "OFF"; timeLeft = totalTime; updateUI(); }
+        function resetTimer() { 
+            pauseTimer(); 
+            document.title = "OFF";
+            timeLeft = totalTime; 
+            updateUI(); 
+        }
+        
+        updateUI();
     </script>
 </body>
 </html>
+
