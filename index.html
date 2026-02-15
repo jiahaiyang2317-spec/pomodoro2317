@@ -5,91 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>OFF</title>
     <style>
-        :root { --bg: #000; --accent: #ff6b6b; }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: sans-serif; height: 100vh; overflow: hidden; }
-        .page { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.4s; }
-        .hidden { opacity: 0; pointer-events: none; transform: scale(0.9); }
+        :root { --glass: rgba(255, 255, 255, 0.1); }
+        body { margin: 0; background: #000 url('https://bing.biturl.top/?resolution=1920&format=image&index=0') center/cover; color: #fff; font-family: -apple-system, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         
-        /* 仪表盘 */
-        .time-now { font-size: 1.2rem; margin-bottom: 20px; color: #888; font-variant-numeric: tabular-nums; }
-        .ring-box { position: relative; width: 280px; height: 280px; }
-        svg { transform: rotate(-90deg); width: 100%; height: 100%; }
-        circle { fill: none; stroke-width: 6; }
-        .prog { stroke: var(--accent); stroke-dasharray: 283; transition: 0.3s linear; }
-        .time-left { position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size: 3.5rem; font-weight: bold; }
+        /* 磨砂玻璃容器 */
+        .glass-card { 
+            background: var(--glass); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 40px; padding: 30px; width: 85%; max-width: 350px; text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
 
-        /* 设置页 */
-        .set-card { background: #1a1a1a; padding: 30px; border-radius: 30px; width: 90%; max-width: 340px; text-align: center; }
-        .inputs { display: flex; justify-content: center; gap: 10px; margin: 25px 0; }
-        .inputs div { display: flex; flex-direction: column; }
-        input { width: 65px; height: 60px; background: #333; border: none; border-radius: 15px; color: #fff; text-align: center; font-size: 1.5rem; }
-        label { font-size: 0.7rem; color: #666; margin-top: 5px; }
-        .start-btn { background: var(--accent); border: none; color: #fff; padding: 18px 0; width: 100%; border-radius: 20px; font-size: 1.2rem; font-weight: bold; }
+        .timer-display { font-size: 4.5rem; font-weight: 200; margin: 20px 0; font-variant-numeric: tabular-nums; }
+        
+        /* 自定义滚轮输入样式 */
+        .picker-box { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
+        .picker-box input { 
+            width: 60px; height: 70px; background: rgba(255,255,255,0.1); border: none; 
+            border-radius: 15px; color: #fff; text-align: center; font-size: 1.8rem;
+        }
+
+        .btn { 
+            background: #fff; color: #000; border: none; padding: 15px 40px; 
+            border-radius: 50px; font-size: 1.1rem; font-weight: bold; transition: 0.3s;
+        }
+        .btn:active { transform: scale(0.95); opacity: 0.8; }
+        
+        #chance-info { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 15px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div id="p-dash" class="page">
-    <div class="time-now" id="clock">00:00:00</div>
-    <div class="ring-box">
-        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" stroke="#222"/><circle id="dot" class="prog" cx="50" cy="50" r="45"/></svg>
-        <div class="time-left" id="timer">00:00</div>
-    </div>
-    <div id="chance" style="margin-top:20px; color:#555">机会: 2</div>
-    <button onclick="showSet()" id="set-link" style="background:none; border:none; color:var(--accent); margin-top:30px; text-decoration:underline">修改时长</button>
-</div>
-
-<div id="p-set" class="page hidden">
-    <div class="set-card">
-        <h3 style="margin:0 0 20px">自定义专注时长</h3>
-        <div class="inputs">
-            <div><input type="number" id="ih" value="0" min="0" max="3"><label>时</label></div>
-            <div><input type="number" id="im" value="25" min="0" max="59"><label>分</label></div>
-            <div><input type="number" id="is" value="0" min="0" max="59"><label>秒</label></div>
+<div class="glass-card" id="main-card">
+    <div id="setup-ui">
+        <h2 style="font-weight: 300;">设定专注时长</h2>
+        <div class="picker-box">
+            <input type="number" id="hh" value="0" placeholder="00"><input type="number" id="mm" value="25" placeholder="00"><input type="number" id="ss" value="0" placeholder="00">
         </div>
-        <button class="start-btn" onclick="go()">开启锁机</button>
+        <button class="btn" onclick="start()">开始沉浸</button>
+    </div>
+
+    <div id="focus-ui" class="hidden">
+        <div class="timer-display" id="timer">25:00</div>
+        <div id="chance-info">剩余退出机会: 2</div>
     </div>
 </div>
 
 <script>
-    let t = 1500, total = 1500, id = null, chances = 2;
+    let t = 0, total = 0, id = null, chances = 2;
 
-    function updateTime() {
-        const d = new Date();
-        document.getElementById('clock').innerText = d.toLocaleTimeString();
-    }
-    setInterval(updateTime, 1000);
-
-    function showSet() { document.getElementById('p-set').classList.remove('hidden'); }
-
-    function go() {
-        let h = +document.getElementById('ih').value, m = +document.getElementById('im').value, s = +document.getElementById('is').value;
-        total = t = h*3600 + m*60 + s;
-        if(t < 60 || t > 10800) return alert("限1分-3小时");
-        document.getElementById('p-set').classList.add('hidden');
-        document.getElementById('set-link').style.display = 'none';
+    function start() {
+        let h = +document.getElementById('hh').value, m = +document.getElementById('mm').value, s = +document.getElementById('ss').value;
+        t = total = h*3600 + m*60 + s;
+        if(t < 1) return;
+        
+        document.getElementById('setup-ui').classList.add('hidden');
+        document.getElementById('focus-ui').classList.remove('hidden');
         document.title = "ON";
+        
         id = setInterval(() => {
-            if(t > 0) { t--; draw(); }
-            else { finish(); }
+            if(t > 0) {
+                t--;
+                let hh=Math.floor(t/3600), mm=Math.floor((t%3600)/60), ss=t%60;
+                document.getElementById('timer').innerText = (hh?hh+':':'') + String(mm).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+            } else {
+                finish();
+            }
         }, 1000);
     }
 
-    function draw() {
-        let h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = t%60;
-        document.getElementById('timer').innerText = (h>0?h+':':'') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-        document.getElementById('dot').style.strokeDashoffset = 283 - (t/total)*283;
-        document.getElementById('chance').innerText = "机会: " + chances;
+    function finish() {
+        clearInterval(id);
+        document.title = "OFF";
+        location.reload(); // 完成后刷新回到初始态
     }
 
-    function finish() { clearInterval(id); id = null; document.title = "OFF"; document.getElementById('set-link').style.display = 'block'; alert("太棒了！"); }
-
+    // 给 Auto.js 调用的接口
     window.requestExit = function() {
-        if(!id) return true;
-        if(chances > 0) { chances--; draw(); if(chances==0) finish(); return true; }
+        if(document.title !== "ON") return true;
+        if(chances > 0) {
+            chances--;
+            document.getElementById('chance-info').innerText = "剩余退出机会: " + chances;
+            if(chances === 0) finish();
+            return true;
+        }
         return false;
     }
 </script>
 </body>
 </html>
-
