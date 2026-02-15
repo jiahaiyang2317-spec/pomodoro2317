@@ -5,99 +5,132 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>OFF</title>
     <style>
-        :root { --work-theme: #ff6b6b; --test-theme: #f0932b; --short-theme: #51cf66; }
-        body { margin: 0; min-height: 100vh; display: flex; justify-content: center; align-items: center; font-family: -apple-system, sans-serif; transition: background 0.8s ease; background-color: var(--work-theme); overflow: hidden; }
-        .app-container { width: 90%; max-width: 400px; }
-        .ios-card { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(45px); -webkit-backdrop-filter: blur(45px); border-radius: 35px; border: 1px solid rgba(255,255,255,0.4); margin-bottom: 20px; text-align: center; transition: 0.5s opacity ease; }
-        .mode-nav { display: flex; padding: 8px; gap: 8px; }
-        .mode-nav button { flex: 1; border: none; background: transparent; padding: 12px; border-radius: 20px; font-weight: 700; color: rgba(0,0,0,0.5); cursor: pointer; }
-        .mode-nav button.active { background: white; color: #000; }
-        .timer-card { padding: 40px 30px; }
-        .timer-display { font-size: 6rem; font-weight: 800; margin: 15px 0; color: #1d1d1f; font-variant-numeric: tabular-nums; letter-spacing: -2px; }
-        .control-group { display: flex; gap: 15px; justify-content: center; }
-        .control-group button { border: none; padding: 18px 30px; border-radius: 25px; font-size: 1.1rem; font-weight: 700; cursor: pointer; }
-        .btn-start { background: #000; color: #fff; }
-        .btn-reset { background: rgba(0,0,0,0.1); color: #000; }
+        :root { --bg: #000; --text: #fff; --accent: #ff6b6b; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; overflow: hidden; height: 100vh; }
+        
+        /* 页面切换动画 */
+        .page { position: absolute; width: 100%; height: 100%; transition: 0.5s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .hidden { transform: translateY(100%); opacity: 0; pointer-events: none; }
+
+        /* 第一页：仪表盘 */
+        .datetime { font-size: 1.2rem; opacity: 0.8; margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+        .ring-container { position: relative; width: 280px; height: 280px; display: flex; align-items: center; justify-content: center; }
+        svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+        circle { fill: none; stroke-width: 8; stroke-linecap: round; }
+        .bg-circle { stroke: rgba(255,255,255,0.1); }
+        .progress-circle { stroke: var(--accent); transition: stroke-dashoffset 0.3s linear; }
+        .timer-text { position: absolute; font-size: 4rem; font-weight: 800; }
+        .chance-tag { margin-top: 20px; font-size: 0.9rem; color: #aaa; }
+
+        /* 第二页：专注设置 */
+        .settings-card { background: rgba(255,255,255,0.1); border-radius: 30px; padding: 30px; width: 100%; text-align: center; }
+        .mode-btn { padding: 15px 30px; border-radius: 20px; border: 1px solid #555; background: none; color: #fff; margin: 5px; font-size: 1rem; }
+        .mode-btn.active { background: #fff; color: #000; border-color: #fff; }
+        .start-btn { margin-top: 30px; width: 100%; padding: 20px; border-radius: 20px; border: none; background: var(--accent); color: #fff; font-size: 1.2rem; font-weight: bold; }
+        
+        .nav-link { margin-top: 40px; text-decoration: underline; color: #888; font-size: 0.9rem; border: none; background: none; }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <nav class="mode-nav ios-card" id="nav-bar">
-            <button onclick="changeMode('test')" id="test-btn">1分测试</button>
-            <button onclick="changeMode('work')" id="work-btn" class="active">专注</button>
-            <button onclick="changeMode('short')" id="short-btn">短休</button>
-        </nav>
 
-        <main class="timer-card ios-card">
-            <div class="timer-display" id="display">25:00</div>
-            <div class="control-group">
-                <button onclick="toggleTimer()" id="ctrl-btn" class="btn-start">开始</button>
-                <button onclick="resetTimer()" class="btn-reset">重置</button>
+    <div id="page-dash" class="page">
+        <div class="datetime" id="current-date">2024年02月15日 00:00:00</div>
+        <div class="ring-container">
+            <svg viewBox="0 0 100 100">
+                <circle class="bg-circle" cx="50" cy="50" r="45"></circle>
+                <circle id="progress" class="progress-circle" cx="50" cy="50" r="45" stroke-dasharray="283" stroke-dashoffset="283"></circle>
+            </svg>
+            <div class="timer-text" id="display">25:00</div>
+        </div>
+        <div class="chance-tag" id="chance-text">剩余退出机会: 2</div>
+        <button class="nav-link" id="to-settings" onclick="goPage('settings')">设置专注时长</button>
+    </div>
+
+    <div id="page-settings" class="page hidden">
+        <div class="settings-card">
+            <h2>专注时长</h2>
+            <div id="mode-selector">
+                <button class="mode-btn" onclick="setTimer(60, this)">1分钟</button>
+                <button class="mode-btn active" onclick="setTimer(1500, this)">25分钟</button>
+                <button class="mode-btn" onclick="setTimer(3000, this)">50分钟</button>
             </div>
-        </main>
+            <button class="start-btn" onclick="startFocus()">开始专注</button>
+        </div>
+        <button class="nav-link" onclick="goPage('dash')">取消</button>
     </div>
 
     <script>
-        let timeLeft = 1500, totalTime = 1500, timerId = null, currentMode = 'work';
-        const settings = {
-            test: { time: 60, theme: '#f0932b' },
-            work: { time: 1500, theme: '#ff6b6b' },
-            short: { time: 300, theme: '#51cf66' }
-        };
+        let timeLeft = 1500, totalTime = 1500, timerId = null;
+        let chances = localStorage.getItem('focus_chances') || 2;
 
-        function changeMode(mode) {
-            currentMode = mode;
-            document.querySelectorAll('.mode-nav button').forEach(b => b.classList.remove('active'));
-            document.getElementById(mode + '-btn').classList.add('active');
-            document.body.style.backgroundColor = settings[mode].theme;
-            timeLeft = totalTime = settings[mode].time;
-            pauseTimer(); 
+        function updateDateTime() {
+            const now = new Date();
+            const fmt = (n) => String(n).padStart(2, '0');
+            document.getElementById('current-date').innerText = 
+                `${now.getFullYear()}年${fmt(now.getMonth()+1)}月${fmt(now.getDate())}日 ${fmt(now.getHours())}:${fmt(now.getMinutes())}:${fmt(now.getSeconds())}`;
+        }
+        setInterval(updateDateTime, 1000);
+
+        function goPage(page) {
+            if (timerId && page === 'settings') return alert('专注中不可更改设置');
+            document.getElementById('page-dash').classList.toggle('hidden', page !== 'dash');
+            document.getElementById('page-settings').classList.toggle('hidden', page !== 'settings');
+        }
+
+        function setTimer(sec, btn) {
+            totalTime = timeLeft = sec;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
             updateUI();
         }
 
         function updateUI() {
             const min = Math.floor(timeLeft / 60);
             const sec = timeLeft % 60;
-            document.getElementById('display').innerText = `${min}:${sec < 10 ? '0' + sec : sec}`;
+            document.getElementById('display').innerText = `${min}:${String(sec).padStart(2, '0')}`;
+            const offset = 283 - (timeLeft / totalTime) * 283;
+            document.getElementById('progress').style.strokeDashoffset = offset;
+            document.getElementById('chance-text').innerText = `剩余退出机会: ${chances}`;
         }
 
-        function toggleTimer() {
-            if (timerId) { 
-                pauseTimer(); 
-                document.title = "OFF"; // 暂停即解锁
-            } else {
-                document.title = "ON"; // 发送锁定信号
-                document.getElementById('nav-bar').style.opacity = "0"; // 隐藏菜单
-                document.getElementById('ctrl-btn').innerText = "暂停";
-                timerId = setInterval(() => {
-                    if (timeLeft > 0) { 
-                        timeLeft--; 
-                        updateUI(); 
-                    } else { 
-                        pauseTimer(); 
-                        document.title = "OFF"; // 时间结束解锁
-                        alert("测试结束，辛苦了！"); 
-                    }
-                }, 1000);
-            }
+        function startFocus() {
+            if (timerId) return;
+            goPage('dash');
+            document.getElementById('to-settings').style.visibility = 'hidden';
+            document.title = "ON";
+            timerId = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateUI();
+                } else {
+                    stopFocus("完成！");
+                }
+            }, 1000);
         }
 
-        function pauseTimer() { 
-            clearInterval(timerId); 
-            timerId = null; 
-            document.getElementById('ctrl-btn').innerText = "开始"; 
-            document.getElementById('nav-bar').style.opacity = "1";
-        }
-
-        function resetTimer() { 
-            pauseTimer(); 
+        function stopFocus(msg) {
+            clearInterval(timerId);
+            timerId = null;
             document.title = "OFF";
-            timeLeft = totalTime; 
-            updateUI(); 
+            document.getElementById('to-settings').style.visibility = 'visible';
+            if(msg) alert(msg);
+        }
+
+        // 处理 Auto.js 发来的退出请求
+        window.requestExit = function() {
+            if (!timerId) return true; // 没在专注，随便退
+            if (chances > 0) {
+                chances--;
+                localStorage.setItem('focus_chances', chances);
+                updateUI();
+                if (chances == 0) stopFocus("消耗最后机会退出！");
+                return true;
+            }
+            return false; // 没机会了，不准退
         }
         
         updateUI();
     </script>
 </body>
 </html>
-
