@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>专注空间 | 锁机番茄钟</title>
     <style>
-        /* 极致磨砂与全屏适配 */
         :root {
             --work-theme: #ff6b6b;
             --short-theme: #51cf66;
@@ -17,7 +16,7 @@
             font-family: -apple-system, sans-serif;
             transition: background 0.8s ease;
             background-color: var(--work-theme);
-            overflow: hidden; /* 防止滑动，为锁机做准备 */
+            overflow: hidden; 
         }
         .app-container { width: 90%; max-width: 400px; }
         .ios-card {
@@ -27,6 +26,7 @@
             border-radius: 35px; border: 1px solid rgba(255,255,255,0.4);
             box-shadow: 0 20px 50px rgba(0,0,0,0.1);
             margin-bottom: 20px; text-align: center;
+            transition: 0.5s opacity ease; /* 增加消失动画 */
         }
         .mode-nav { display: flex; padding: 8px; gap: 8px; }
         .mode-nav button {
@@ -50,11 +50,12 @@
 </head>
 <body>
     <div class="app-container">
-        <nav class="mode-nav ios-card">
+        <nav class="mode-nav ios-card" id="nav-bar">
             <button onclick="changeMode('work')" id="work-btn" class="active">专注</button>
             <button onclick="changeMode('short')" id="short-btn">短休</button>
             <button onclick="changeMode('long')" id="long-btn">长休</button>
         </nav>
+
         <main class="timer-card ios-card">
             <div class="status-tag" id="mode-text">WORK SESSION</div>
             <div class="timer-display" id="display">25:00</div>
@@ -69,10 +70,11 @@
     <script>
         let timeLeft = 1500, totalTime = 1500, timerId = null, currentMode = 'work';
         const settings = {
-            work: { time: 1500, label: 'WORK SESSION', theme: '#ff6b6b' },
-            short: { time: 300, label: 'SHORT BREAK', theme: '#51cf66' },
-            long: { time: 900, label: 'LONG BREAK', theme: '#5c7cff' }
+            work: { time: 1500, label: '专注中...', theme: '#ff6b6b' },
+            short: { time: 300, label: '短休中...', theme: '#51cf66' },
+            long: { time: 900, label: '长休中...', theme: '#5c7cff' }
         };
+
         function changeMode(mode) {
             currentMode = mode;
             document.querySelectorAll('.mode-nav button').forEach(b => b.classList.remove('active'));
@@ -82,6 +84,7 @@
             totalTime = settings[mode].time; timeLeft = totalTime;
             pauseTimer(); updateUI();
         }
+
         function updateUI() {
             const min = Math.floor(timeLeft / 60);
             const sec = timeLeft % 60;
@@ -89,18 +92,45 @@
             const ratio = ((totalTime - timeLeft) / totalTime) * 100;
             document.getElementById('progress').style.width = ratio + "%";
         }
+
         function toggleTimer() {
-            if (timerId) { pauseTimer(); }
-            else {
+            const nav = document.getElementById('nav-bar');
+            if (timerId) { 
+                pauseTimer(); 
+                nav.style.opacity = "1"; // 暂停时显示切换按钮
+                nav.style.pointerEvents = "auto";
+            } else {
+                // 开始时隐藏菜单，防止你乱点
+                nav.style.opacity = "0"; 
+                nav.style.pointerEvents = "none";
                 document.getElementById('ctrl-btn').innerText = "暂停";
+                
                 timerId = setInterval(() => {
-                    if (timeLeft > 0) { timeLeft--; updateUI(); }
-                    else { pauseTimer(); alert("滴滴！任务完成！"); }
+                    if (timeLeft > 0) { 
+                        timeLeft--; updateUI(); 
+                    } else { 
+                        pauseTimer(); 
+                        nav.style.opacity = "1";
+                        nav.style.pointerEvents = "auto";
+                        alert("时间到！"); 
+                    }
                 }, 1000);
             }
         }
-        function pauseTimer() { clearInterval(timerId); timerId = null; document.getElementById('ctrl-btn').innerText = "开始"; }
-        function resetTimer() { pauseTimer(); timeLeft = totalTime; updateUI(); }
+
+        function pauseTimer() { 
+            clearInterval(timerId); 
+            timerId = null; 
+            document.getElementById('ctrl-btn').innerText = "开始"; 
+        }
+
+        function resetTimer() { 
+            pauseTimer(); 
+            document.getElementById('nav-bar').style.opacity = "1";
+            document.getElementById('nav-bar').style.pointerEvents = "auto";
+            timeLeft = totalTime; 
+            updateUI(); 
+        }
         updateUI();
     </script>
 </body>
