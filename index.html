@@ -5,115 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>OFF</title>
     <style>
-        body { margin: 0; background: #000 url('https://bing.biturl.top/?resolution=1920&format=image&index=0') center/cover no-repeat; color: #fff; font-family: -apple-system, "SF Pro Display", sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        
-        /* 极致磨砂玻璃 */
+        body { margin: 0; background: #1a1a1a; color: #fff; font-family: -apple-system, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        /* 磨砂玻璃 */
         .glass { 
-            background: rgba(0, 0, 0, 0.4); 
-            backdrop-filter: blur(25px); 
-            -webkit-backdrop-filter: blur(25px);
+            background: rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 40px; padding: 40px 20px; width: 85%; max-width: 360px; text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
-
-        /* 顶部年月日 */
-        .date-header { font-size: 0.9rem; letter-spacing: 2px; color: rgba(255,255,255,0.7); margin-bottom: 30px; }
-        .date-header span { display: block; font-size: 1.4rem; color: #fff; margin-top: 5px; font-weight: 300; }
-
-        /* 倒计时圆环区域 */
-        .timer-box { position: relative; width: 220px; height: 220px; margin: 0 auto; }
-        .timer-display { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 3rem; font-weight: 200; font-variant-numeric: tabular-nums; }
-        
-        /* 仿轮盘输入区 */
-        .picker { display: flex; justify-content: center; gap: 10px; margin: 30px 0; }
-        .picker input { width: 65px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; font-size: 1.5rem; text-align: center; padding: 10px 0; outline: none; }
-        .picker label { display: block; font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 5px; }
-
-        .btn-start { background: #fff; color: #000; border: none; padding: 15px 50px; border-radius: 30px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        .btn-start:active { transform: scale(0.95); opacity: 0.8; }
-
+        .date-header { font-size: 0.9rem; letter-spacing: 2px; color: rgba(255,255,255,0.6); margin-bottom: 20px; }
+        .date-header span { display: block; font-size: 1.8rem; color: #fff; margin-top: 5px; font-weight: 200; }
+        .timer-display { font-size: 4rem; font-weight: 100; margin: 30px 0; font-variant-numeric: tabular-nums; }
+        .picker { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
+        .picker input { width: 60px; background: rgba(255,255,255,0.15); border: none; border-radius: 12px; color: #fff; font-size: 1.5rem; text-align: center; padding: 10px 0; }
+        .btn-start { background: #fff; color: #000; border: none; padding: 15px 50px; border-radius: 30px; font-size: 1.1rem; font-weight: bold; }
         .hidden { display: none !important; }
-        #chance-tip { margin-top: 20px; font-size: 0.8rem; color: rgba(255,255,255,0.3); }
+        #prog-ring { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: -1; }
     </style>
 </head>
 <body>
-
-<div class="glass" id="card">
+<div class="glass">
     <div class="date-header">
-        <div id="real-date">0000年00月00日</div>
+        <div id="real-date">加载中...</div>
         <span id="real-time">00:00:00</span>
     </div>
-
     <div id="setup">
         <div class="picker">
-            <div><input type="number" id="h" value="0"><label>时</label></div>
-            <div><input type="number" id="m" value="25"><label>分</label></div>
-            <div><input type="number" id="s" value="0"><label>秒</label></div>
+            <input type="number" id="h" value="0"><input type="number" id="m" value="25"><input type="number" id="s" value="0">
         </div>
         <button class="btn-start" onclick="startFocus()">开始专注</button>
     </div>
-
     <div id="focusing" class="hidden">
-        <div class="timer-box">
-            <svg viewBox="0 0 100 100" style="width:100%; height:100%; transform: rotate(-90deg);">
-                <circle cx="50" cy="50" r="48" stroke="rgba(255,255,255,0.1)" stroke-width="2" fill="none"/>
-                <circle id="prog" cx="50" cy="50" r="48" stroke="#fff" stroke-width="2" fill="none" stroke-dasharray="301.5" stroke-dashoffset="301.5" style="transition: stroke-dashoffset 1s linear;"/>
-            </svg>
-            <div class="timer-display" id="count">25:00</div>
-        </div>
-        <div id="chance-tip">剩余逃生机会: 2</div>
+        <div class="timer-display" id="count">25:00</div>
+        <div style="color:rgba(255,255,255,0.3); font-size:0.8rem">剩余机会: <span id="chances">2</span></div>
     </div>
 </div>
-
 <script>
     let t = 0, total = 0, timer = null, chances = 2;
-
-    // 更新实时时钟
     function updateClock() {
         const now = new Date();
-        document.getElementById('real-date').innerText = now.toLocaleDateString('zh-CN', {year:'numeric', month:'long', day:'numeric'});
-        document.getElementById('real-time').innerText = now.toLocaleTimeString('zh-CN', {hour12:false});
+        document.getElementById('real-date').innerText = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日';
+        document.getElementById('real-time').innerText = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
     }
-    setInterval(updateClock, 1000);
-    updateClock();
+    setInterval(updateClock, 1000); updateClock();
 
     function startFocus() {
-        let h = +document.getElementById('h').value, m = +document.getElementById('m').value, s = +document.getElementById('s').value;
-        t = total = h*3600 + m*60 + s;
-        if(t < 5) return alert("设置时间太短啦！");
-        
+        t = (+document.getElementById('h').value)*3600 + (+document.getElementById('m').value)*60 + (+document.getElementById('s').value);
+        if(t < 1) return;
         document.getElementById('setup').classList.add('hidden');
         document.getElementById('focusing').classList.remove('hidden');
         document.title = "ON";
-
         timer = setInterval(() => {
             if(t > 0) {
                 t--;
                 let hh=Math.floor(t/3600), mm=Math.floor((t%3600)/60), ss=t%60;
                 document.getElementById('count').innerText = (hh?hh+':':'') + String(mm).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
-                document.getElementById('prog').style.strokeDashoffset = 301.5 - (t/total)*301.5;
-            } else {
-                endFocus("专注达成！");
-            }
+            } else { location.reload(); }
         }, 1000);
     }
-
-    function endFocus(msg) {
-        clearInterval(timer);
-        document.title = "OFF";
-        if(msg) alert(msg);
-        location.reload();
-    }
-
     window.requestExit = function() {
         if(document.title !== "ON") return true;
-        if(chances > 0) {
-            chances--;
-            document.getElementById('chance-tip').innerText = "剩余逃生机会: " + chances;
-            if(chances === 0) endFocus("被迫退出");
-            return true;
-        }
+        if(chances > 0) { chances--; document.getElementById('chances').innerText = chances; if(chances === 0) location.reload(); return true; }
         return false;
     }
 </script>
