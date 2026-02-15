@@ -2,94 +2,116 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>OFF</title>
     <style>
-        :root { --glass: rgba(255, 255, 255, 0.1); }
-        body { margin: 0; background: #000 url('https://bing.biturl.top/?resolution=1920&format=image&index=0') center/cover; color: #fff; font-family: -apple-system, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        body { margin: 0; background: #000 url('https://bing.biturl.top/?resolution=1920&format=image&index=0') center/cover no-repeat; color: #fff; font-family: -apple-system, "SF Pro Display", sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         
-        /* 磨砂玻璃容器 */
-        .glass-card { 
-            background: var(--glass); 
-            backdrop-filter: blur(20px); 
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 40px; padding: 30px; width: 85%; max-width: 350px; text-align: center;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        /* 极致磨砂玻璃 */
+        .glass { 
+            background: rgba(0, 0, 0, 0.4); 
+            backdrop-filter: blur(25px); 
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 40px; padding: 40px 20px; width: 85%; max-width: 360px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
-        .timer-display { font-size: 4.5rem; font-weight: 200; margin: 20px 0; font-variant-numeric: tabular-nums; }
-        
-        /* 自定义滚轮输入样式 */
-        .picker-box { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
-        .picker-box input { 
-            width: 60px; height: 70px; background: rgba(255,255,255,0.1); border: none; 
-            border-radius: 15px; color: #fff; text-align: center; font-size: 1.8rem;
-        }
+        /* 顶部年月日 */
+        .date-header { font-size: 0.9rem; letter-spacing: 2px; color: rgba(255,255,255,0.7); margin-bottom: 30px; }
+        .date-header span { display: block; font-size: 1.4rem; color: #fff; margin-top: 5px; font-weight: 300; }
 
-        .btn { 
-            background: #fff; color: #000; border: none; padding: 15px 40px; 
-            border-radius: 50px; font-size: 1.1rem; font-weight: bold; transition: 0.3s;
-        }
-        .btn:active { transform: scale(0.95); opacity: 0.8; }
+        /* 倒计时圆环区域 */
+        .timer-box { position: relative; width: 220px; height: 220px; margin: 0 auto; }
+        .timer-display { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 3rem; font-weight: 200; font-variant-numeric: tabular-nums; }
         
-        #chance-info { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 15px; }
-        .hidden { display: none; }
+        /* 仿轮盘输入区 */
+        .picker { display: flex; justify-content: center; gap: 10px; margin: 30px 0; }
+        .picker input { width: 65px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; font-size: 1.5rem; text-align: center; padding: 10px 0; outline: none; }
+        .picker label { display: block; font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 5px; }
+
+        .btn-start { background: #fff; color: #000; border: none; padding: 15px 50px; border-radius: 30px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .btn-start:active { transform: scale(0.95); opacity: 0.8; }
+
+        .hidden { display: none !important; }
+        #chance-tip { margin-top: 20px; font-size: 0.8rem; color: rgba(255,255,255,0.3); }
     </style>
 </head>
 <body>
 
-<div class="glass-card" id="main-card">
-    <div id="setup-ui">
-        <h2 style="font-weight: 300;">设定专注时长</h2>
-        <div class="picker-box">
-            <input type="number" id="hh" value="0" placeholder="00"><input type="number" id="mm" value="25" placeholder="00"><input type="number" id="ss" value="0" placeholder="00">
-        </div>
-        <button class="btn" onclick="start()">开始沉浸</button>
+<div class="glass" id="card">
+    <div class="date-header">
+        <div id="real-date">0000年00月00日</div>
+        <span id="real-time">00:00:00</span>
     </div>
 
-    <div id="focus-ui" class="hidden">
-        <div class="timer-display" id="timer">25:00</div>
-        <div id="chance-info">剩余退出机会: 2</div>
+    <div id="setup">
+        <div class="picker">
+            <div><input type="number" id="h" value="0"><label>时</label></div>
+            <div><input type="number" id="m" value="25"><label>分</label></div>
+            <div><input type="number" id="s" value="0"><label>秒</label></div>
+        </div>
+        <button class="btn-start" onclick="startFocus()">开始专注</button>
+    </div>
+
+    <div id="focusing" class="hidden">
+        <div class="timer-box">
+            <svg viewBox="0 0 100 100" style="width:100%; height:100%; transform: rotate(-90deg);">
+                <circle cx="50" cy="50" r="48" stroke="rgba(255,255,255,0.1)" stroke-width="2" fill="none"/>
+                <circle id="prog" cx="50" cy="50" r="48" stroke="#fff" stroke-width="2" fill="none" stroke-dasharray="301.5" stroke-dashoffset="301.5" style="transition: stroke-dashoffset 1s linear;"/>
+            </svg>
+            <div class="timer-display" id="count">25:00</div>
+        </div>
+        <div id="chance-tip">剩余逃生机会: 2</div>
     </div>
 </div>
 
 <script>
-    let t = 0, total = 0, id = null, chances = 2;
+    let t = 0, total = 0, timer = null, chances = 2;
 
-    function start() {
-        let h = +document.getElementById('hh').value, m = +document.getElementById('mm').value, s = +document.getElementById('ss').value;
+    // 更新实时时钟
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('real-date').innerText = now.toLocaleDateString('zh-CN', {year:'numeric', month:'long', day:'numeric'});
+        document.getElementById('real-time').innerText = now.toLocaleTimeString('zh-CN', {hour12:false});
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function startFocus() {
+        let h = +document.getElementById('h').value, m = +document.getElementById('m').value, s = +document.getElementById('s').value;
         t = total = h*3600 + m*60 + s;
-        if(t < 1) return;
+        if(t < 5) return alert("设置时间太短啦！");
         
-        document.getElementById('setup-ui').classList.add('hidden');
-        document.getElementById('focus-ui').classList.remove('hidden');
+        document.getElementById('setup').classList.add('hidden');
+        document.getElementById('focusing').classList.remove('hidden');
         document.title = "ON";
-        
-        id = setInterval(() => {
+
+        timer = setInterval(() => {
             if(t > 0) {
                 t--;
                 let hh=Math.floor(t/3600), mm=Math.floor((t%3600)/60), ss=t%60;
-                document.getElementById('timer').innerText = (hh?hh+':':'') + String(mm).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+                document.getElementById('count').innerText = (hh?hh+':':'') + String(mm).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+                document.getElementById('prog').style.strokeDashoffset = 301.5 - (t/total)*301.5;
             } else {
-                finish();
+                endFocus("专注达成！");
             }
         }, 1000);
     }
 
-    function finish() {
-        clearInterval(id);
+    function endFocus(msg) {
+        clearInterval(timer);
         document.title = "OFF";
-        location.reload(); // 完成后刷新回到初始态
+        if(msg) alert(msg);
+        location.reload();
     }
 
-    // 给 Auto.js 调用的接口
     window.requestExit = function() {
         if(document.title !== "ON") return true;
         if(chances > 0) {
             chances--;
-            document.getElementById('chance-info').innerText = "剩余退出机会: " + chances;
-            if(chances === 0) finish();
+            document.getElementById('chance-tip').innerText = "剩余逃生机会: " + chances;
+            if(chances === 0) endFocus("被迫退出");
             return true;
         }
         return false;
@@ -97,3 +119,4 @@
 </script>
 </body>
 </html>
+
