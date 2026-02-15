@@ -5,147 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>OFF</title>
     <style>
-        :root { --bg: #000; --text: #fff; --accent: #ff6b6b; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; overflow: hidden; height: 100vh; }
-        .page { position: absolute; width: 100%; height: 100%; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .hidden { transform: translateY(100%); opacity: 0; pointer-events: none; }
-
-        /* 第一页：仪表盘 */
-        .datetime { font-size: 1.1rem; opacity: 0.6; margin-bottom: 20px; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
-        .ring-container { position: relative; width: 300px; height: 300px; display: flex; align-items: center; justify-content: center; }
+        :root { --bg: #000; --accent: #ff6b6b; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: sans-serif; height: 100vh; overflow: hidden; }
+        .page { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.4s; }
+        .hidden { opacity: 0; pointer-events: none; transform: scale(0.9); }
+        
+        /* 仪表盘 */
+        .time-now { font-size: 1.2rem; margin-bottom: 20px; color: #888; font-variant-numeric: tabular-nums; }
+        .ring-box { position: relative; width: 280px; height: 280px; }
         svg { transform: rotate(-90deg); width: 100%; height: 100%; }
-        circle { fill: none; stroke-width: 6; stroke-linecap: round; }
-        .bg-circle { stroke: rgba(255,255,255,0.1); }
-        .progress-circle { stroke: var(--accent); transition: stroke-dashoffset 0.3s linear; shadow: 0 0 10px var(--accent); }
-        .timer-text { position: absolute; font-size: 3.5rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-        .chance-tag { margin-top: 30px; font-size: 0.9rem; color: #666; background: rgba(255,255,255,0.05); padding: 5px 15px; border-radius: 15px; }
+        circle { fill: none; stroke-width: 6; }
+        .prog { stroke: var(--accent); stroke-dasharray: 283; transition: 0.3s linear; }
+        .time-left { position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size: 3.5rem; font-weight: bold; }
 
-        /* 第二页：高级设置 */
-        .settings-card { background: rgba(255,255,255,0.05); border-radius: 40px; padding: 40px 20px; width: 100%; max-width: 350px; border: 1px solid rgba(255,255,255,0.1); }
-        .time-picker { display: flex; justify-content: center; gap: 10px; margin: 30px 0; }
-        .picker-group { display: flex; flex-direction: column; align-items: center; }
-        .picker-group input { width: 70px; background: rgba(255,255,255,0.1); border: 1px solid #444; border-radius: 15px; color: #fff; font-size: 1.5rem; text-align: center; padding: 10px; }
-        .picker-group label { font-size: 0.7rem; color: #888; margin-top: 5px; }
-        .start-btn { width: 100%; padding: 20px; border-radius: 25px; border: none; background: var(--accent); color: #fff; font-size: 1.3rem; font-weight: bold; cursor: pointer; box-shadow: 0 10px 20px rgba(255,107,107,0.3); }
-        .nav-link { margin-top: 30px; color: #555; border: none; background: none; text-decoration: underline; font-size: 0.9rem; }
+        /* 设置页 */
+        .set-card { background: #1a1a1a; padding: 30px; border-radius: 30px; width: 90%; max-width: 340px; text-align: center; }
+        .inputs { display: flex; justify-content: center; gap: 10px; margin: 25px 0; }
+        .inputs div { display: flex; flex-direction: column; }
+        input { width: 65px; height: 60px; background: #333; border: none; border-radius: 15px; color: #fff; text-align: center; font-size: 1.5rem; }
+        label { font-size: 0.7rem; color: #666; margin-top: 5px; }
+        .start-btn { background: var(--accent); border: none; color: #fff; padding: 18px 0; width: 100%; border-radius: 20px; font-size: 1.2rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="page-dash" class="page">
-        <div class="datetime" id="current-date">0000年00月00日 00:00:00</div>
-        <div class="ring-container">
-            <svg viewBox="0 0 100 100">
-                <circle class="bg-circle" cx="50" cy="50" r="47"></circle>
-                <circle id="progress" class="progress-circle" cx="50" cy="50" r="47" stroke-dasharray="295.3" stroke-dashoffset="295.3"></circle>
-            </svg>
-            <div class="timer-text" id="display">00:00:00</div>
-        </div>
-        <div class="chance-tag" id="chance-text">剩余退出机会: 2</div>
-        <button class="nav-link" id="to-settings" onclick="goPage('settings')">设置自定义时长</button>
+<div id="p-dash" class="page">
+    <div class="time-now" id="clock">00:00:00</div>
+    <div class="ring-box">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" stroke="#222"/><circle id="dot" class="prog" cx="50" cy="50" r="45"/></svg>
+        <div class="time-left" id="timer">00:00</div>
     </div>
+    <div id="chance" style="margin-top:20px; color:#555">机会: 2</div>
+    <button onclick="showSet()" id="set-link" style="background:none; border:none; color:var(--accent); margin-top:30px; text-decoration:underline">修改时长</button>
+</div>
 
-    <div id="page-settings" class="page hidden">
-        <div class="settings-card">
-            <h2 style="margin-top:0">设定专注时间</h2>
-            <div class="time-picker">
-                <div class="picker-group">
-                    <input type="number" id="h" value="0" min="0" max="3">
-                    <label>时</label>
-                </div>
-                <div class="picker-group">
-                    <input type="number" id="m" value="25" min="0" max="59">
-                    <label>分</label>
-                </div>
-                <div class="picker-group">
-                    <input type="number" id="s" value="0" min="0" max="59">
-                    <label>秒</label>
-                </div>
-            </div>
-            <button class="start-btn" onclick="applySettings()">确认并开始</button>
+<div id="p-set" class="page hidden">
+    <div class="set-card">
+        <h3 style="margin:0 0 20px">自定义专注时长</h3>
+        <div class="inputs">
+            <div><input type="number" id="ih" value="0" min="0" max="3"><label>时</label></div>
+            <div><input type="number" id="im" value="25" min="0" max="59"><label>分</label></div>
+            <div><input type="number" id="is" value="0" min="0" max="59"><label>秒</label></div>
         </div>
-        <button class="nav-link" onclick="goPage('dash')">返回</button>
+        <button class="start-btn" onclick="go()">开启锁机</button>
     </div>
+</div>
 
-    <script>
-        let timeLeft = 1500, totalTime = 1500, timerId = null;
-        let chances = localStorage.getItem('focus_chances') || 2;
+<script>
+    let t = 1500, total = 1500, id = null, chances = 2;
 
-        function updateDateTime() {
-            const now = new Date();
-            const fmt = (n) => String(n).padStart(2, '0');
-            document.getElementById('current-date').innerText = 
-                `${now.getFullYear()}年${fmt(now.getMonth()+1)}月${fmt(now.getDate())}日 ${fmt(now.getHours())}:${fmt(now.getMinutes())}:${fmt(now.getSeconds())}`;
-        }
-        setInterval(updateDateTime, 1000);
+    function updateTime() {
+        const d = new Date();
+        document.getElementById('clock').innerText = d.toLocaleTimeString();
+    }
+    setInterval(updateTime, 1000);
 
-        function goPage(p) {
-            document.getElementById('page-dash').classList.toggle('hidden', p !== 'dash');
-            document.getElementById('page-settings').classList.toggle('hidden', p !== 'settings');
-        }
+    function showSet() { document.getElementById('p-set').classList.remove('hidden'); }
 
-        function applySettings() {
-            let hh = parseInt(document.getElementById('h').value) || 0;
-            let mm = parseInt(document.getElementById('m').value) || 0;
-            let ss = parseInt(document.getElementById('s').value) || 0;
-            
-            let total = (hh * 3600) + (mm * 60) + ss;
+    function go() {
+        let h = +document.getElementById('ih').value, m = +document.getElementById('im').value, s = +document.getElementById('is').value;
+        total = t = h*3600 + m*60 + s;
+        if(t < 60 || t > 10800) return alert("限1分-3小时");
+        document.getElementById('p-set').classList.add('hidden');
+        document.getElementById('set-link').style.display = 'none';
+        document.title = "ON";
+        id = setInterval(() => {
+            if(t > 0) { t--; draw(); }
+            else { finish(); }
+        }, 1000);
+    }
 
-            // 限制：1分钟 - 3小时
-            if (total < 60) { alert("最少专注1分钟哦"); return; }
-            if (total > 10800) { alert("上限为3小时"); return; }
+    function draw() {
+        let h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = t%60;
+        document.getElementById('timer').innerText = (h>0?h+':':'') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+        document.getElementById('dot').style.strokeDashoffset = 283 - (t/total)*283;
+        document.getElementById('chance').innerText = "机会: " + chances;
+    }
 
-            totalTime = timeLeft = total;
-            updateUI();
-            startFocus();
-        }
+    function finish() { clearInterval(id); id = null; document.title = "OFF"; document.getElementById('set-link').style.display = 'block'; alert("太棒了！"); }
 
-        function updateUI() {
-            const h = Math.floor(timeLeft / 3600);
-            const m = Math.floor((timeLeft % 3600) / 60);
-            const s = timeLeft % 60;
-            const fmt = (n) => String(n).padStart(2, '0');
-            
-            document.getElementById('display').innerText = 
-                h > 0 ? `${h}:${fmt(m)}:${fmt(s)}` : `${m}:${fmt(s)}`;
-            
-            const offset = 295.3 - (timeLeft / totalTime) * 295.3;
-            document.getElementById('progress').style.strokeDashoffset = offset;
-            document.getElementById('chance-text').innerText = `剩余退出机会: ${chances}`;
-        }
-
-        function startFocus() {
-            goPage('dash');
-            document.getElementById('to-settings').style.visibility = 'hidden';
-            document.title = "ON";
-            timerId = setInterval(() => {
-                if (timeLeft > 0) { timeLeft--; updateUI(); }
-                else { stopFocus(); }
-            }, 1000);
-        }
-
-        function stopFocus() {
-            clearInterval(timerId);
-            timerId = null;
-            document.title = "OFF";
-            document.getElementById('to-settings').style.visibility = 'visible';
-            alert("完成！");
-        }
-
-        window.requestExit = function() {
-            if (!timerId) return true;
-            if (chances > 0) {
-                chances--;
-                localStorage.setItem('focus_chances', chances);
-                updateUI();
-                if (chances == 0) { stopFocus(); }
-                return true;
-            }
-            return false;
-        }
-        updateUI();
-    </script>
+    window.requestExit = function() {
+        if(!id) return true;
+        if(chances > 0) { chances--; draw(); if(chances==0) finish(); return true; }
+        return false;
+    }
+</script>
 </body>
 </html>
 
