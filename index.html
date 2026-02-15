@@ -8,56 +8,64 @@
         :root { --bg: #000; --text: #fff; --accent: #ff6b6b; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; overflow: hidden; height: 100vh; }
-        
-        /* 页面切换动画 */
-        .page { position: absolute; width: 100%; height: 100%; transition: 0.5s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .page { position: absolute; width: 100%; height: 100%; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .hidden { transform: translateY(100%); opacity: 0; pointer-events: none; }
 
         /* 第一页：仪表盘 */
-        .datetime { font-size: 1.2rem; opacity: 0.8; margin-bottom: 10px; font-variant-numeric: tabular-nums; }
-        .ring-container { position: relative; width: 280px; height: 280px; display: flex; align-items: center; justify-content: center; }
+        .datetime { font-size: 1.1rem; opacity: 0.6; margin-bottom: 20px; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+        .ring-container { position: relative; width: 300px; height: 300px; display: flex; align-items: center; justify-content: center; }
         svg { transform: rotate(-90deg); width: 100%; height: 100%; }
-        circle { fill: none; stroke-width: 8; stroke-linecap: round; }
+        circle { fill: none; stroke-width: 6; stroke-linecap: round; }
         .bg-circle { stroke: rgba(255,255,255,0.1); }
-        .progress-circle { stroke: var(--accent); transition: stroke-dashoffset 0.3s linear; }
-        .timer-text { position: absolute; font-size: 4rem; font-weight: 800; }
-        .chance-tag { margin-top: 20px; font-size: 0.9rem; color: #aaa; }
+        .progress-circle { stroke: var(--accent); transition: stroke-dashoffset 0.3s linear; shadow: 0 0 10px var(--accent); }
+        .timer-text { position: absolute; font-size: 3.5rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .chance-tag { margin-top: 30px; font-size: 0.9rem; color: #666; background: rgba(255,255,255,0.05); padding: 5px 15px; border-radius: 15px; }
 
-        /* 第二页：专注设置 */
-        .settings-card { background: rgba(255,255,255,0.1); border-radius: 30px; padding: 30px; width: 100%; text-align: center; }
-        .mode-btn { padding: 15px 30px; border-radius: 20px; border: 1px solid #555; background: none; color: #fff; margin: 5px; font-size: 1rem; }
-        .mode-btn.active { background: #fff; color: #000; border-color: #fff; }
-        .start-btn { margin-top: 30px; width: 100%; padding: 20px; border-radius: 20px; border: none; background: var(--accent); color: #fff; font-size: 1.2rem; font-weight: bold; }
-        
-        .nav-link { margin-top: 40px; text-decoration: underline; color: #888; font-size: 0.9rem; border: none; background: none; }
+        /* 第二页：高级设置 */
+        .settings-card { background: rgba(255,255,255,0.05); border-radius: 40px; padding: 40px 20px; width: 100%; max-width: 350px; border: 1px solid rgba(255,255,255,0.1); }
+        .time-picker { display: flex; justify-content: center; gap: 10px; margin: 30px 0; }
+        .picker-group { display: flex; flex-direction: column; align-items: center; }
+        .picker-group input { width: 70px; background: rgba(255,255,255,0.1); border: 1px solid #444; border-radius: 15px; color: #fff; font-size: 1.5rem; text-align: center; padding: 10px; }
+        .picker-group label { font-size: 0.7rem; color: #888; margin-top: 5px; }
+        .start-btn { width: 100%; padding: 20px; border-radius: 25px; border: none; background: var(--accent); color: #fff; font-size: 1.3rem; font-weight: bold; cursor: pointer; box-shadow: 0 10px 20px rgba(255,107,107,0.3); }
+        .nav-link { margin-top: 30px; color: #555; border: none; background: none; text-decoration: underline; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <div id="page-dash" class="page">
-        <div class="datetime" id="current-date">2024年02月15日 00:00:00</div>
+        <div class="datetime" id="current-date">0000年00月00日 00:00:00</div>
         <div class="ring-container">
             <svg viewBox="0 0 100 100">
-                <circle class="bg-circle" cx="50" cy="50" r="45"></circle>
-                <circle id="progress" class="progress-circle" cx="50" cy="50" r="45" stroke-dasharray="283" stroke-dashoffset="283"></circle>
+                <circle class="bg-circle" cx="50" cy="50" r="47"></circle>
+                <circle id="progress" class="progress-circle" cx="50" cy="50" r="47" stroke-dasharray="295.3" stroke-dashoffset="295.3"></circle>
             </svg>
-            <div class="timer-text" id="display">25:00</div>
+            <div class="timer-text" id="display">00:00:00</div>
         </div>
         <div class="chance-tag" id="chance-text">剩余退出机会: 2</div>
-        <button class="nav-link" id="to-settings" onclick="goPage('settings')">设置专注时长</button>
+        <button class="nav-link" id="to-settings" onclick="goPage('settings')">设置自定义时长</button>
     </div>
 
     <div id="page-settings" class="page hidden">
         <div class="settings-card">
-            <h2>专注时长</h2>
-            <div id="mode-selector">
-                <button class="mode-btn" onclick="setTimer(60, this)">1分钟</button>
-                <button class="mode-btn active" onclick="setTimer(1500, this)">25分钟</button>
-                <button class="mode-btn" onclick="setTimer(3000, this)">50分钟</button>
+            <h2 style="margin-top:0">设定专注时间</h2>
+            <div class="time-picker">
+                <div class="picker-group">
+                    <input type="number" id="h" value="0" min="0" max="3">
+                    <label>时</label>
+                </div>
+                <div class="picker-group">
+                    <input type="number" id="m" value="25" min="0" max="59">
+                    <label>分</label>
+                </div>
+                <div class="picker-group">
+                    <input type="number" id="s" value="0" min="0" max="59">
+                    <label>秒</label>
+                </div>
             </div>
-            <button class="start-btn" onclick="startFocus()">开始专注</button>
+            <button class="start-btn" onclick="applySettings()">确认并开始</button>
         </div>
-        <button class="nav-link" onclick="goPage('dash')">取消</button>
+        <button class="nav-link" onclick="goPage('dash')">返回</button>
     </div>
 
     <script>
@@ -72,65 +80,72 @@
         }
         setInterval(updateDateTime, 1000);
 
-        function goPage(page) {
-            if (timerId && page === 'settings') return alert('专注中不可更改设置');
-            document.getElementById('page-dash').classList.toggle('hidden', page !== 'dash');
-            document.getElementById('page-settings').classList.toggle('hidden', page !== 'settings');
+        function goPage(p) {
+            document.getElementById('page-dash').classList.toggle('hidden', p !== 'dash');
+            document.getElementById('page-settings').classList.toggle('hidden', p !== 'settings');
         }
 
-        function setTimer(sec, btn) {
-            totalTime = timeLeft = sec;
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        function applySettings() {
+            let hh = parseInt(document.getElementById('h').value) || 0;
+            let mm = parseInt(document.getElementById('m').value) || 0;
+            let ss = parseInt(document.getElementById('s').value) || 0;
+            
+            let total = (hh * 3600) + (mm * 60) + ss;
+
+            // 限制：1分钟 - 3小时
+            if (total < 60) { alert("最少专注1分钟哦"); return; }
+            if (total > 10800) { alert("上限为3小时"); return; }
+
+            totalTime = timeLeft = total;
             updateUI();
+            startFocus();
         }
 
         function updateUI() {
-            const min = Math.floor(timeLeft / 60);
-            const sec = timeLeft % 60;
-            document.getElementById('display').innerText = `${min}:${String(sec).padStart(2, '0')}`;
-            const offset = 283 - (timeLeft / totalTime) * 283;
+            const h = Math.floor(timeLeft / 3600);
+            const m = Math.floor((timeLeft % 3600) / 60);
+            const s = timeLeft % 60;
+            const fmt = (n) => String(n).padStart(2, '0');
+            
+            document.getElementById('display').innerText = 
+                h > 0 ? `${h}:${fmt(m)}:${fmt(s)}` : `${m}:${fmt(s)}`;
+            
+            const offset = 295.3 - (timeLeft / totalTime) * 295.3;
             document.getElementById('progress').style.strokeDashoffset = offset;
             document.getElementById('chance-text').innerText = `剩余退出机会: ${chances}`;
         }
 
         function startFocus() {
-            if (timerId) return;
             goPage('dash');
             document.getElementById('to-settings').style.visibility = 'hidden';
             document.title = "ON";
             timerId = setInterval(() => {
-                if (timeLeft > 0) {
-                    timeLeft--;
-                    updateUI();
-                } else {
-                    stopFocus("完成！");
-                }
+                if (timeLeft > 0) { timeLeft--; updateUI(); }
+                else { stopFocus(); }
             }, 1000);
         }
 
-        function stopFocus(msg) {
+        function stopFocus() {
             clearInterval(timerId);
             timerId = null;
             document.title = "OFF";
             document.getElementById('to-settings').style.visibility = 'visible';
-            if(msg) alert(msg);
+            alert("完成！");
         }
 
-        // 处理 Auto.js 发来的退出请求
         window.requestExit = function() {
-            if (!timerId) return true; // 没在专注，随便退
+            if (!timerId) return true;
             if (chances > 0) {
                 chances--;
                 localStorage.setItem('focus_chances', chances);
                 updateUI();
-                if (chances == 0) stopFocus("消耗最后机会退出！");
+                if (chances == 0) { stopFocus(); }
                 return true;
             }
-            return false; // 没机会了，不准退
+            return false;
         }
-        
         updateUI();
     </script>
 </body>
 </html>
+
